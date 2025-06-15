@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat Room</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 20px auto; }
+    #messages { list-style: none; padding: 0; max-height: 300px; overflow-y: scroll; border: 1px solid #ccc; margin-bottom: 10px; }
+    #messages li { padding: 5px 10px; }
+    #message { width: 80%; }
+    button { padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h1>Chat Room</h1>
+  <a href="/logout">Logout</a>
+  <ul id="messages"></ul>
+  <input id="message" placeholder="Type a message" autocomplete="off" />
+  <button onclick="sendMessage()">Send</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // Get username from server-side rendered value (via cookie/session)
+    fetch('/auth/me')
+      .then(res => res.json())
+      .then(data => {
+        socket.emit('register user', data.name);
+      });
+
+    function sendMessage() {
+      const input = document.getElementById('message');
+      const msg = input.value.trim();
+      if (msg !== '') {
+        socket.emit('chat message', msg);
+        input.value = '';
+      }
+    }
+
+    socket.on('chat message', function(msg) {
+      const li = document.createElement('li');
+      li.textContent = msg;
+      document.getElementById('messages').appendChild(li);
+    });
+  </script>
+</body>
+</html>
