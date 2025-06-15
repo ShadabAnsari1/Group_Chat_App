@@ -7,7 +7,7 @@
     body { font-family: sans-serif; max-width: 600px; margin: 20px auto; }
     #messages { list-style: none; padding: 0; max-height: 300px; overflow-y: scroll; border: 1px solid #ccc; margin-bottom: 10px; }
     #messages li { padding: 5px 10px; }
-    #message { width: 80%; }
+    #message { width: 80%; padding: 5px; }
     button { padding: 5px 10px; }
   </style>
 </head>
@@ -21,14 +21,17 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+    let userName = 'Guest';
 
-    // Get username from server-side rendered value (via cookie/session)
+    // Get username from server
     fetch('/auth/me')
       .then(res => res.json())
       .then(data => {
-        socket.emit('register user', data.name);
+        userName = data.name;
+        socket.emit('register user', userName);
       });
 
+    // Send message on button click
     function sendMessage() {
       const input = document.getElementById('message');
       const msg = input.value.trim();
@@ -38,11 +41,33 @@
       }
     }
 
-    socket.on('chat message', function(msg) {
-      const li = document.createElement('li');
-      li.textContent = msg;
-      document.getElementById('messages').appendChild(li);
+    // Send message on Enter key
+    document.getElementById('message').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
     });
+
+    // Display messages with color per user
+    socket.on('chat message', function (msg) {
+      const li = document.createElement('li');
+      const [name, ...rest] = msg.split(': ');
+      const text = rest.join(': ');
+      li.innerHTML = `<strong style="color:${stringToColor(name)}">${name}</strong>: ${text}`;
+      document.getElementById('messages').appendChild(li);
+      li.scrollIntoView();
+    });
+
+    // Generate color from username
+    function stringToColor(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const hue = hash % 360;
+      return `hsl(${hue}, 70%, 50%)`;
+    }
   </script>
 </body>
 </html>
