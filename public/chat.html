@@ -5,69 +5,27 @@
   <title>Chat Room</title>
   <style>
     body { font-family: sans-serif; max-width: 600px; margin: 20px auto; }
-    #messages { list-style: none; padding: 0; max-height: 300px; overflow-y: scroll; border: 1px solid #ccc; margin-bottom: 10px; }
+    #messages { list-style: none; padding: 0; max-height: 300px; overflow-y: scroll; border: 1px solid #ccc; margin-bottom: 10px; background: #fff; }
     #messages li { padding: 5px 10px; }
-    #message { width: 80%; padding: 5px; }
+    form { display: flex; flex-wrap: wrap; gap: 5px; }
+    #input { flex: 1; padding: 5px; }
+    #imageInput { flex: 1; }
     button { padding: 5px 10px; }
+    img { max-width: 200px; max-height: 200px; border-radius: 4px; }
   </style>
 </head>
 <body>
   <h1>Chat Room</h1>
   <a href="/logout">Logout</a>
   <ul id="messages"></ul>
-  <input id="message" placeholder="Type a message" autocomplete="off" />
-  <button onclick="sendMessage()">Send</button>
+
+  <form id="form">
+    <input id="input" placeholder="Type a message" autocomplete="off" />
+    <input type="file" id="imageInput" accept="image/*">
+    <button>Send</button>
+  </form>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    let userName = 'Guest';
-
-    // Get username from server
-    fetch('/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        userName = data.name;
-        socket.emit('register user', userName);
-      });
-
-    // Send message on button click
-    function sendMessage() {
-      const input = document.getElementById('message');
-      const msg = input.value.trim();
-      if (msg !== '') {
-        socket.emit('chat message', msg);
-        input.value = '';
-      }
-    }
-
-    // Send message on Enter key
-    document.getElementById('message').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    // Display messages with color per user
-    socket.on('chat message', function (msg) {
-      const li = document.createElement('li');
-      const [name, ...rest] = msg.split(': ');
-      const text = rest.join(': ');
-      li.innerHTML = `<strong style="color:${stringToColor(name)}">${name}</strong>: ${text}`;
-      document.getElementById('messages').appendChild(li);
-      li.scrollIntoView();
-    });
-
-    // Generate color from username
-    function stringToColor(str) {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-      }
-      const hue = hash % 360;
-      return `hsl(${hue}, 70%, 50%)`;
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
